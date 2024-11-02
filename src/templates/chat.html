@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Чат с {{ recipient.username }}
+{% endblock %}
+
+{% block content %}
+<div id="log"></div>
+<div class="container">
+    <div class="d-flex align-items-center">
+        <a href="{{url_for('app_blueprint.home')}}">Назад</a>
+        <h1 class="text-center m-auto p-2">Чат с {{ recipient.username }}</h1>
+        <h2>вы: {{ current_user.username }}</h2>
+    </div>
+    <div class="d-frid g-2" style="display: grid; gap: 20px;">
+        <div id="messages" style="min-height: 80vh; border: 1px solid #ccc; border-radius: 1%; padding: 10px; max-height: 700px; height: 100%; overflow-y: auto;">
+            {% for message in messages %}
+                {% if message.sender_id == current_user.id %}
+                <div style="justify-content: end; display: grid;">
+                    <p class="m-0 p-2" style="background-color: #007bff; color: #fff; border-radius: 10px; border-bottom-right-radius: 0; text-align: left; justify-self: end; ">{{ message.content }}</p>
+                </div>
+                <hr>
+                {% else %}
+                <div style="justify-content: start; display: grid;">
+                    <p class="m-0 p-2" style="background-color: #e1e5eb; color: #4b4b4b; border-radius: 10px; border-bottom-left-radius: 0;">{{ message.content }}</p>
+                </div>
+                <hr>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div style="gap: 10px; display: flex;">
+            <input id="message" class="form-input w-100" style="border: 1px solid #ccc; border-radius: 5px;" placeholder="Введите сообщение">
+            <button class="btn btn-primary" onclick="sendMessage()">Отправить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+const socket = io();
+
+socket.on('connect', function() {
+    console.log("Запрос на подключение отправлен.");
+});
+
+
+socket.on('after_connect', function(msg) {
+    if (msg) {
+        console.log("Ответ сервера после подключения:", msg.data);
+    } else {
+        console.log("Ошибка: данные не получены после подключения.");
+    }
+});
+
+socket.on('error', function(data) {
+    console.error("Ошибка:", data.data);
+});
+
+
+function scrollToBottom() {
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    scrollToBottom();  // Прокрутка вниз при загрузке страницы
+});
+
+
+const recipientId = {{ recipient.id }};
+console.log(recipientId)
+
+function sendMessage() {
+    const messageInput = document.getElementById('message');
+    const message = messageInput.value;
+
+    if (message) {
+        console.log(`Отправка сообщения: "${message}" получателю с ID {{ recipient.id }}`);
+        socket.emit(
+            'send_private_message', {
+                'recipient_id': recipientId,
+                'message': message
+                }
+            );
+
+        const messagesDiv = document.getElementById('messages');
+        const msgDiv = document.createElement('div');
+        msgDiv.style.display = 'grid';
+        msgDiv.style.justifyContent = 'end';
+        msgDiv.innerHTML = `<p style="background-color: #007bff; color: #fff; padding: 10px; border-radius: 10px; border-bottom-right-radius: 0;">${message}</p>`;
+
+        messagesDiv.appendChild(msgDiv);
+        messageInput.value = '';
+scrollToBottom();
+} else {
+        console.log("Ошибка: сообщение пустое");
+    }
+}
+
+socket.on('receive_private_message', function(data) {
+    console.log("Получено сообщение от сервера:", data);
+    const messagesDiv = document.getElementById('messages');
+    const msgDiv = document.createElement('div');
+    msgDiv.style.display = 'grid';
+    msgDiv.style.justifyContent = 'start';
+    msgDiv.innerHTML = `<p style="background-color: #e1e5eb; color: #4b4b4b; padding: 10px; border-radius: 10px; border-bottom-left-radius: 0;">${data.message}</p>`;
+
+
+    messagesDiv.appendChild(msgDiv);
+    scrollToBottom();
+});
+
+</script>
+
+{% endblock %}

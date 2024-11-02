@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
+    {% block style %} {% endblock %}
+    <title>{% block title %} {% endblock %}</title>
+</head>
+<body data-bs-theme="dark">
+
+{% block content %}
+
+{% endblock %}
+</body>
+</html>
